@@ -54,3 +54,6 @@ Every stage can be resumed: finished videos are skipped when a stage runs again.
 
 ## Rate limits
 The defaults stay well below YouTube's limit of about 300 videos/hour for guest sessions: a 10–20 s sleep between videos, 0.75 s between requests, at most 150 videos per hour, and an exponential back-off on `Sign in to confirm you're not a bot` or HTTP 429. PLAN.md §4 covers cookies and PO tokens. If you use cookies, use a dedicated account, because yt-dlp warns that accounts can be banned.
+
+## License
+Code: MIT (see [LICENSE](LICENSE)). The license covers this code only, not any video or data it downloads.

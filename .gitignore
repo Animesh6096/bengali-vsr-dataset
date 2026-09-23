@@ -5,3 +5,4 @@ __pycache__/
 cookies*.txt
 logs/
 .DS_Store
+*.zip
