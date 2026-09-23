@@ -1,0 +1,9 @@
+yt-dlp[default]>=2026.8.19
+torch>=2.4
+transformers>=4.45
+accelerate
+soundfile
+numpy
+silero-vad>=6.0
+ctc-forced-aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+# system: ffmpeg, deno (yt-dlp needs a JS runtime for YouTube since 2025.11.12)

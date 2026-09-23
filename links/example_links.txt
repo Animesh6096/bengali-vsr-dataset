@@ -1,0 +1,6 @@
+# One URL per line. Videos, playlists, or a channel's /videos tab all work.
+# Anything after '#' is ignored. Prefer talking-head content (anchors, lectures, speeches, interviews).
+#
+# https://www.youtube.com/watch?v=VIDEO_ID
+# https://www.youtube.com/playlist?list=PLAYLIST_ID
+# https://www.youtube.com/@SomeBanglaChannel/videos
