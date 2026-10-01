@@ -20,10 +20,17 @@ Most lip-reading datasets are English (LRW, LRS2, LRS3). Other languages have th
 Mandarin (LRW-1000), Arabic (LRW-AR), Persian (LRW-Persian). Bengali has very little.
 
 Our previous work, *A Transfer Learning Framework for Cross-Script Visual Speech Recognition*
-(BRAC University, 2025), reached 79.77% accuracy on LRW-AR but only 45.83% on LipBengal. The main
-cause was a lack of data: LipBengal has about 20 samples per word, against about 85 in LRW-AR.
-LipBengal was recorded by 150 undergraduate students of one institution (92% male) reading prompted words on phone cameras, not natural speech. No public Bengali dataset is word-level, in-the-wild and
-large scale. This project builds the tooling to create one.
+(BRAC University, 2025), reached 79.77% accuracy on LRW-AR but only 45.83% on LipBengal, and
+pointed to the lack of Bengali training data as the main cause.
+
+The existing Bengali lip-reading datasets are recorded, prompted speech:
+- **BenAV** (2021): 50 words, 128 speakers.
+- **LipBengal** (2025): 150 students of one institution, 92% male, recorded on phone cameras.
+
+The large multilingual MultiVSR corpus (2025) covers 13 languages and does not include Bengali.
+As far as we found, no word-level Bengali lip-reading dataset of natural, in-the-wild speech
+exists. This project builds the tooling to create one. The checks behind this claim and what is
+still unverified are in [docs/RESEARCH_LOG.md](docs/RESEARCH_LOG.md) §7.
 
 [docs/RESEARCH_LOG.md](docs/RESEARCH_LOG.md) records every design decision with its reason, all measurements, the verification done and open issues; it is the reference for the paper. [PLAN.md](PLAN.md) has the full research background: how LRW, LRS3, LRW-1000, LRW-AR and
 LRW-Persian were built, the tool choices, size estimates and YouTube rate limits.
@@ -277,7 +284,8 @@ MediaPipe is pinned to 0.10.35: version 1.0.x aborts on macOS even with the CPU 
 ## Usage
 
 ```bash
-# 1. put links in a text file (one per line; see links/example_links.txt)
+# 1. put links in a text file (one per line; see links/example_links.txt).
+#    Which videos to pick, copyright, candidate channels: docs/SOURCES.md, links/candidate_channels.txt
 .venv/bin/python -m bvsr.download expand links/my_links.txt --tag news
 .venv/bin/python -m bvsr.download fetch --max-videos 20
 
@@ -303,6 +311,7 @@ Every stage can be resumed. Finished videos are skipped when a stage runs again.
 | Command | Option | Default | Meaning |
 |---|---|---|---|
 | `download expand` | `--min-duration` / `--max-duration` | 60 s / 3 h | keep videos in this length range |
+| | `--max-per-link` | 50 | newest videos taken from each channel/playlist link |
 | `download fetch` | `--per-hour` | 150 | max videos per rolling hour |
 | | `--sleep-min` / `--sleep-max` | 10 / 20 s | random wait between videos |
 | | `--max-height` | 720 | max video resolution |
@@ -364,6 +373,7 @@ bvsr/
 links/              example link lists
 PLAN.md             research background, roadmap
 docs/RESEARCH_LOG.md  decisions + rationale, measurements, verification, open issues, paper notes
+docs/SOURCES.md     how to choose videos, copyright tiers, candidate channels, vocabulary plan
 CLAUDE.md           instructions for AI-assisted work sessions on this repo
 ```
 

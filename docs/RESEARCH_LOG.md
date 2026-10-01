@@ -29,6 +29,7 @@ Contents:
 | 2026-09-24 | v0.1 | Full README. |
 | 2026-10-01 | v0.2 | Stage 3a: `bvsr.faces` (MediaPipe landmarks, head pose, tracking, shot-cut detection). `bvsr.cut` rewritten: face-centred 256×256 word clips and 224×224 sentence clips rendered on a shared 25 fps grid, per-frame landmarks and crop boxes, rejection log. MediaPipe pinned to 0.10.35. This research log and CLAUDE.md added. |
 | 2026-10-01 | docs | Checked three open facts against primary sources (§5, §7): LRW sample format and framing, LipBengal details, and the ASR papers. Corrected: LipBengal is not "controlled" (prompted speech by 150 students); LRW chose its speaker with a mouth-openness classifier, not SyncNet; tugstugi claim narrowed to the Bengali-Loop benchmark (34.07% WER). |
+| 2026-10-01 | v0.2.1 | Source research: 37 candidate channels found and checked by metadata only (`docs/SOURCES.md`, `links/candidate_channels.txt`). Copyright tiers, balance targets and a vocabulary plan written down (D15–D17). Novelty check: BenAV and MultiVSR added to related work. Thesis's "20 vs 85 samples per word" flagged as inconsistent with published dataset sizes (§2). `download expand --max-per-link` added. |
 
 ---
 
@@ -42,14 +43,23 @@ The target is publication of the dataset as a paper.
 Recognition* (Karim, Bhattacharjee, Fahad, Khan; BRAC University, Dec 2025), reported:
 - 79.77% top-1 accuracy on LRW-AR (WER 20.23%), but only 45.83% on LipBengal (WER 54.19%);
 - top-10: 94.64% on LRW-AR and 74.73% on LipBengal;
-- data scarcity as the main cause: about 20 samples per word in LipBengal against about 85 in LRW-AR;
+- data scarcity as the main cause;
 - a recommendation of at least 100 samples per word.
+
+**Caution: the thesis's "85 samples per word (LRW-AR)" and "20 samples per word (LipBengal)"
+(§4.6, §5.4) don't match the published dataset sizes.** LRW-AR is 20,000 clips for 100 words, i.e.
+200 per word (160 per word in its 16,000-clip training split, thesis Table 3.2). LipBengal has 150
+speakers each recording up to 503 words, allowing up to about 150 per word. The thesis also calls
+LipBengal's vocabulary both "503 words" and "1,000 words". The figures may describe the subset
+actually used in training. **Recount from the training data before citing them** (clips per class in
+the LRW-AR and LipBengal folders that were used).
 
 LipBengal (Sahed et al., *Data in Brief* 2025) was recorded by 150 undergraduate students of one
 institution (MIST; 92% male) reading prompted words on phone cameras: 720p, 30 fps, released as PNG
 frames, up to 503 words per speaker, 363,150 utterances, 54 classes. Its abstract calls the conditions
 "diverse and uncontrolled", but the speech is prompted, not natural. No in-the-wild, word-level
-Bengali VSR dataset is publicly available, as far as we found.
+Bengali VSR dataset is publicly available, as far as we found. The search and what is still
+unverified are in §7 ("Novelty check").
 
 **People.** Animesh Bhattacharjee (repository owner); thesis supervisor Dr. Aniqua Nusrat Zereen,
 co-supervisor Md Nafiz Ishtiaque Mahee (BRAC University).
@@ -184,6 +194,44 @@ LRW-Persian took the top 2,500 words per program, intersected across channels an
 to 743 words. Splits should be **speaker- or channel-disjoint**: LRW split by broadcast date,
 LRW-Persian by program.
 
+### D15. Source selection [`docs/SOURCES.md`]
+- **Talking-head content from official channels, mixed genres:** news, talk shows, podcasts and interviews, lectures/TEDx, vlogs. Prior datasets also mix broadcast genres (LRW: BBC programmes; LRW-1000: news and conversational programmes; LRW-Persian: 67 programmes). What keeps the visual format consistent is the face filters (D10), not the genre.
+- **No re-upload channels:** the search found many, e.g. channels re-posting BBC bulletins or radio news. A licence shown by a non-owner is invalid, and re-uploads would duplicate footage.
+- **Radio-as-video has no visible speaker,** so it is excluded.
+- **YouTube's language tag is unreliable** (Prothom Alo tagged `hi`; EKHON TV and The Talk Show `en`), so a per-video language-ID check is needed. MultiVSR used a VoxLingua-trained model.
+- **Candidate channels:** 37, checked by metadata on 2026-10-01: licence, language tag, followers, resolution of 1–2 long videos each. **Not screened visually.** Region is a guess from names and titles.
+- **Screening (proposed, needs a go-ahead):** a 2-minute 480p section of 3 videos per channel, run through `bvsr.faces`; rank channels by the share of frames with one frontal face ≥100 px, cuts per minute, and speech share.
+- **Per-link cap:** `download expand --max-per-link N` (default 50) takes the newest N videos per channel or playlist, via yt-dlp `playlist_items` (`playlistend` is deprecated). Tested on one channel with N = 5.
+
+### D16. Copyright tiers
+- **Facts (checked 2026-10-01):**
+  - YouTube offers the Standard YouTube License or CC BY (YouTube Help, "License types on YouTube"). CC BY allows sharing and adapting with attribution.
+  - TEDx talks are CC BY-NC-ND (TEDx licence page, e.g. TEDxTokyo; TED Talks usage policy), so no derivatives: cut clips can't be shared.
+  - yt-dlp's `license` field is set from the "License" metadata row, which appears for CC videos; it is empty for standard ones (yt-dlp `_video.py`, around line 4510).
+- **Tier A** (CC BY and uploaded by the owner): clips can be released with attribution. **Tier B** (standard or TEDx): metadata only, following VoxCeleb, AVSpeech and MultiVSR.
+- **Search result:** only 3 of 37 candidate channels are CC BY (one podcast, two religious-lecture channels). Tier B will dominate.
+- **Not legal advice;** confirm with the university.
+
+### D17. Vocabulary selection plan (to run after the pilot)
+- **Prior rules:**
+  - LRW: the 500 most frequent words of 5–10 characters; ≥800 training and ≥40 val/test occurrences each (paper).
+  - LRW-1000: naturally distributed.
+  - LRW-AR: 100 words.
+  - LRW-Persian: top 2,500 per programme, intersected and pruned to 743.
+- **Plan:**
+  - Count clips, distinct speakers and distinct channels per word.
+  - Length rule by **median aligned duration** (~0.25–0.9 s) plus ≥3 grapheme clusters, instead of a character count, because Bengali conjuncts and vowel signs don't map to Latin letters.
+  - Require spread: e.g. ≥20 speakers and ≥3 channels per word.
+  - Exclude numbers and news-cycle proper names. Decide about English loanwords (exclude, or keep as a flagged subset).
+  - Report homophene groups using the thesis viseme mapping.
+  - Main benchmark: balanced, e.g. 500 words × ≥200 clips. Optionally also a naturally distributed release.
+  - Final list reviewed by Bengali speakers.
+- **Balance targets:**
+  - ≥35–40% female clips. Existing Bengali sets are 92% male (LipBengal) and 107 of 128 speakers male (BenAV).
+  - Both Bangladesh and West Bengal.
+  - Per-speaker and per-channel caps.
+  - Gender **annotated by hand per speaker**, not inferred from names or classifiers.
+
 ---
 
 ## 4. Experiments and measurements
@@ -259,6 +307,10 @@ framing was checked against only one official sample.
 8. **Homophenes and spelling variants are not merged in labels.**
 9. **Numbers spoken as words are not aligned** (D5).
 10. **Faces processing time varied (58 s vs 89 s) between two runs;** not investigated.
+11. **Candidate channels not screened visually;** gender mix and front-facing share unknown (D15).
+12. **No language-ID check;** YouTube's language tag is unreliable (D15).
+13. **Novelty claim partly unverified:** BenAV's recording conditions and the 2022 "Lip Reading Bengali Words" paper (ACM, doi 10.1145/3579654.3579677; page returned HTTP 403) still need checking (§7).
+14. **The thesis's samples-per-word figures need recounting** from the training data (§2).
 
 ---
 
@@ -275,11 +327,32 @@ framing was checked against only one official sample.
 | LRW-AR | 100 words, 20,000 videos, 36 speakers; YouTube news; automated pipeline | https://crns-smartvision.github.io/lrwar/ |
 | LRW-Persian (2025) | 1,989 h from 67 TV programs; VOSK ASR; words ≥4 chars, confidence > 0.9, < 1.5 s; TalkNet; face ≥100×100; DeepFace > 0.75; mask filter; \|yaw\| > 30° / \|pitch\| > 40° removed; MediaPipe FaceLandmarker; top 2,500 per program intersected and pruned to 743 words; 414,308 clips; program-disjoint 78/22 split | https://arxiv.org/abs/2510.22716 |
 | VoxCeleb | released as YouTube URLs + timestamps, CC BY 4.0 | https://www.robots.ox.ac.uk/~vgg/data/voxceleb/ |
+| BenAV (Pondit, Rukon, Das, Kabir; ICONIP 2021) | 50 words; 128 speakers (107 male, 21 female); 26,300 utterances; 7.3 h; baselines 98.70% / 82.5% in two configurations. **Recording conditions not stated** in the abstract or repo page | https://researchoutput.csu.edu.au/en/publications/benav-a-bengali-audio-visual-corpus-for-visual-speech-recognition/ ; https://github.com/AnikNicks/BenAV-A-New-Bengali-Audio-Visual-Corpus |
+| MultiVSR (Prajwal, Hegde, Zisserman; VGG 2025) | ~12k h, 13 languages (English, Portuguese, Spanish, Russian, German, French, Japanese, Italian, Mandarin, Polish, Dutch, Catalan, Turkish); **no Bengali**. Pipeline: AVSpeech YouTube IDs, 25 fps, S3FD faces, ≥96×96, SyncNet offset ≤±10 frames, VoxLingua language ID, WhisperX (Whisper large-v3) word alignment; languages chosen with ≥100 h | https://www.robots.ox.ac.uk/~vgg/publications/2025/Prajwal25/prajwal25.pdf |
+| TEDx licence | CC BY-NC-ND: share with attribution; no commercial use; no derivatives | https://www.tedxtokyo.com/creative-commons/ ; https://www.ted.com/about/our-organization/our-policies-terms/ted-talks-usage-policy |
+| YouTube licences | Standard YouTube License or CC BY; CC BY allows reuse with attribution | https://support.google.com/youtube/answer/2797468 |
 | LipBengal (Sahed et al., Data in Brief 58:111254, 2025; doi:10.1016/j.dib.2024.111254) | 150 speakers (MIST undergraduates; 92% male, 8% female); up to 503 words each; 363,150 utterances; 54 classes; phone cameras at 720p 30 fps on the MIST campus and a dormitory hall; released as 720×1280 PNG frames; abstract says "diverse and uncontrolled conditions". The "40 speakers" in an earlier search summary was wrong. | PubMed 39845145; full text PMC11750490 |
 | Bengali ASR on Bengali-Loop (DL Sprint 4.0) | tugstugi as released 34.07% WER; Hishab TITU-BN 50.67%; fine-tuned systems 24.41–27.00% | arXiv 2603.04809, 2605.08214, 2603.03158 |
 | ROI study (Zhang et al. 2020) | LRW faces loosely registered by nose centres, little or no scale change in a clip (conflicts with the LRW paper's "mouth centred"; the official sample has the nose at the centre, D11) | https://arxiv.org/abs/2003.03206 |
 | MediaPipe Face Landmarker | bundle = BlazeFace short-range + FaceMesh-V2 (478 points) + blendshapes | https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker |
 | yt-dlp limits | ~300 videos/h guest, ~2,000/h account, ban risk; `-t sleep`; PO tokens; JS runtime needed since 2025.11.12 | https://github.com/yt-dlp/yt-dlp/wiki/Extractors, https://github.com/yt-dlp/yt-dlp/issues/15012 |
+
+### Novelty check (2026-10-01)
+Searched for Bengali/Bangla lip-reading and audio-visual datasets, and for multilingual VSR
+corpora that might include Bengali.
+
+**Found:**
+- **BenAV (2021):** 50 words, 128 speakers. Recording conditions not stated in the sources checked; its ~99% baseline suggests controlled recordings (inference, unverified).
+- **LipBengal (2025):** prompted words, 150 students, phone cameras.
+- **"Lip Reading Bengali Words" (ACM 2022):** dataset unknown; the page was not accessible.
+- **MultiVSR (2025):** no Bengali. LRS3, LRW-1000, LRW-AR and LRW-Persian are other languages.
+
+**Claim we can make now:** "to our knowledge, the first word-level Bengali lip-reading dataset of
+natural, in-the-wild speech". Not "large-scale" until we have the numbers. Before submission, read
+the BenAV and the ACM 2022 papers, and repeat the search on Google Scholar and IEEE Xplore.
+
+**MultiVSR is the closest methodological work** (automatic YouTube pipeline, SyncNet filtering,
+WhisperX labels). Expect reviewers to compare against it.
 
 ---
 

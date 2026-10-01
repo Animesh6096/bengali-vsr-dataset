@@ -4,10 +4,11 @@ Goal: build a word-level (LRW-style) and sentence-level (LRS-style) Bengali visu
 recognition dataset from YouTube, using a pipeline that also works for other languages.
 
 Why: our thesis (*A Transfer Learning Framework for Cross-Script VSR*) got 79.77% on LRW-AR
-but only 45.83% on LipBengal, and pointed to data scarcity as the main cause: about 20 samples
-per word in LipBengal against about 85 in LRW-AR. The thesis recommended at least 100 samples
-per word. LipBengal was recorded by 150 undergraduate students of one institution (92% male) reading prompted words on phone cameras, not natural speech. No in-the-wild, word-level
-Bengali VSR dataset is publicly available.
+but only 45.83% on LipBengal, and pointed to data scarcity as the main cause. The thesis
+recommended at least 100 samples per word. (Its "20 vs 85 samples per word" figures don't match
+the datasets' published sizes; see RESEARCH_LOG §2 before quoting them.) Existing Bengali datasets
+are prompted recordings: BenAV (50 words, 128 speakers) and LipBengal (150 students of one
+institution, 92% male). No in-the-wild, word-level Bengali VSR dataset was found (RESEARCH_LOG §7).
 
 ---
 

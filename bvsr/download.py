@@ -68,6 +68,9 @@ def expand(args: argparse.Namespace) -> None:
         "sleep_interval_requests": args.sleep_requests,
         "ignoreerrors": True,
     }
+    if args.max_per_link:
+        # A news channel's /videos tab can list tens of thousands of videos; take the newest N per link.
+        opts["playlist_items"] = f"1:{args.max_per_link}"
     added = skipped = 0
     with yt_dlp.YoutubeDL(opts) as ydl:
         for url in read_links(args.links):
@@ -219,6 +222,7 @@ def main() -> None:
     pe.add_argument("--min-duration", type=float, default=60)
     pe.add_argument("--max-duration", type=float, default=3 * 3600)
     pe.add_argument("--sleep-requests", type=float, default=0.75)
+    pe.add_argument("--max-per-link", type=int, default=50, help="videos taken from each playlist/channel link (0 = all)")
     pe.set_defaults(func=expand)
 
     pf = sub.add_parser("fetch", help="download videos listed in the manifest")
