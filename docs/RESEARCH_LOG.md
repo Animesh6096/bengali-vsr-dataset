@@ -29,6 +29,7 @@ Contents:
 | 2026-09-24 | v0.1 | Full README. |
 | 2026-10-01 | v0.2 | Stage 3a: `bvsr.faces` (MediaPipe landmarks, head pose, tracking, shot-cut detection). `bvsr.cut` rewritten: face-centred 256×256 word clips and 224×224 sentence clips rendered on a shared 25 fps grid, per-frame landmarks and crop boxes, rejection log. MediaPipe pinned to 0.10.35. This research log and CLAUDE.md added. |
 | 2026-10-01 | docs | Checked three open facts against primary sources (§5, §7): LRW sample format and framing, LipBengal details, and the ASR papers. Corrected: LipBengal is not "controlled" (prompted speech by 150 students); LRW chose its speaker with a mouth-openness classifier, not SyncNet; tugstugi claim narrowed to the Bengali-Loop benchmark (34.07% WER). |
+| 2026-10-02 | v0.2.2 | `bvsr.screen` (channel screening) built and run on 11 news channels before YouTube throttling stopped it (§4.5). Fetch now detects truncated sections and stops on slow (throttled) downloads. `faces.analyze()` refactor, regression-checked. Platform survey (D16, SOURCES §3b). |
 | 2026-10-01 | v0.2.1 | Source research: 37 candidate channels found and checked by metadata only (`docs/SOURCES.md`, `links/candidate_channels.txt`). Copyright tiers, balance targets and a vocabulary plan written down (D15–D17). Novelty check: BenAV and MultiVSR added to related work. Thesis's "20 vs 85 samples per word" flagged as inconsistent with published dataset sizes (§2). `download expand --max-per-link` added. |
 
 ---
@@ -276,6 +277,27 @@ Machine: Apple M2 MacBook Air, 8 GB RAM, macOS; Python 3.12.10 (versions in §9)
 - **Sentences:** 15 candidates → **8 clips** (12.5 s, 482 MB). Rejected: 3 track break, 2 shot cut, 1 yaw, 1 low alignment score.
 - The earlier full-frame version (v0.1) gave 422 word clips. The difference comes from the new face and cut filters.
 
+### 4.5 Channel screening (2026-10-02, partial)
+- **Plan:** 111 sections (3 per source, 39 sources). **Downloaded:** 33 before throttling (one section took 27 min); 2 were truncated (28 s, 1.9 s of 120 s) and 4 failed with transient `ffmpeg exited with code 8` errors (a manual retry of one worked). **Analysed:** 29 sections from 11 news channels (420 s on 4 workers, peak about 345 MB).
+- **Results (usable = one valid face + speech):**
+
+| Channel | Sections | Usable | One face | Several faces | Speech | Cuts/min | Face px (720p) |
+|---|---|---|---|---|---|---|---|
+| Prothom Alo | 3 | **0.49** | 0.64 | 0.00 | 0.82 | 5.0 | 158 |
+| Independent Television | 3 | **0.47** | 0.52 | 0.00 | 0.93 | 7.8 | 198 |
+| BBC News বাংলা | 3 | **0.45** | 0.56 | 0.01 | 0.82 | 5.5 | 218 |
+| The Daily Star | 3 | **0.42** | 0.46 | 0.00 | 0.94 | 10.5 | 188 |
+| EKHON TV | 2 | **0.36** | 0.50 | 0.00 | 0.83 | 1.0 | 90 |
+| Ekattor TV | 3 | **0.36** | 0.48 | 0.00 | 0.90 | 12.7 | 190 |
+| BanglaVision NEWS | 3 | **0.34** | 0.62 | 0.00 | 0.92 | 10.7 | 161 |
+| ATN Bangla News | 3 | **0.30** | 0.39 | 0.09 | 0.92 | 10.8 | 147 |
+| Jamuna TV | 3 | **0.24** | 0.41 | 0.00 | 0.96 | 0.5 | 129 |
+| DBC NEWS | 2 | **0.22** | 0.47 | 0.01 | 0.86 | 9.5 | 157 |
+| DW বাংলা | 3 | **0.14** | 0.27 | 0.08 | 0.89 | 7.3 | 231 |
+
+- **Checked by eye:** the best section (0.76) is a single person facing the camera; the worst (0.00) is an infographic segment.
+- **Not yet screened:** podcasts, talk shows, education, TEDx.
+
 ---
 
 ## 5. Verification done
@@ -427,3 +449,4 @@ versions in `requirements.txt`.
 | B8 | The sentence `.txt` header said `ASDSCORE` (LRS3's active-speaker score) for our aligner score | renamed to `SCORE` |
 | B9 | MediaPipe 1.0.1 aborts on macOS | pinned 0.10.35 |
 | B10 | A one-frame false face (hands) would count as a second face | require ≥3 frames |
+| B11 | During throttling, yt-dlp section downloads returned truncated files without an error, and a crawl never triggered the rate-limit back-off | screening fetch checks the file's duration and stops when a section takes over 5 min |

@@ -170,15 +170,49 @@ speakers. A better dataset should report and control:
 | Speakers | cap clips per speaker and per channel so a few anchors don't dominate |
 | Splits | speaker- or channel-disjoint test set |
 
-## 6. Screening step (proposed, not run)
+## 6. Screening (`bvsr.screen`), partial results 2026-10-02
 
-Rank channels by how much usable footage they have, before bulk downloading:
-1. For each candidate channel, take 3 recent videos.
-2. Download only a 2-minute section of each at 480p (`yt-dlp --download-sections`).
-3. Run `bvsr.faces`, and per video measure: share of frames with exactly one frontal face (|yaw| ≤ 30°, ≥100 px), shot cuts per minute, and speech share from VAD.
-4. Keep channels where most frames pass, and note the host's gender by looking at the faces.
+How it works: for each source, 3 videos spread over its 30 newest uploads. A 2-minute section
+of each (starting about 25% in) is downloaded at ≤480p and analysed with the stage 3 face code.
+A frame counts as **usable** when exactly one face is visible, ≥100 px wide at 720p-equivalent,
+|yaw| ≤ 30° and |pitch| ≤ 40°, *and* VAD detects speech. Outputs: `data/screen/report.html` (with
+contact sheets) and `data/screen/channels.tsv` (with a column for host-gender notes).
 
-This means about 110 short downloads, so it needs a go-ahead before running.
+**The run was stopped part-way because YouTube started throttling.** No explicit rate-limit
+message appeared, but one 2-minute section took 27 minutes and two sections came back truncated
+(28 s and 1.9 s). The fetch step now stops itself when a section takes over 5 minutes, and it
+detects and retries truncated files. 29 sections from **11 news channels** were analysed. The
+podcast, talk-show, education and TEDx sources are still to do. Re-run
+`python -m bvsr.screen fetch && python -m bvsr.screen analyze && python -m bvsr.screen report`
+later to continue.
+
+| Channel | Sections | Usable | One face | Several faces | Speech | Cuts/min | Face px (720p) |
+|---|---|---|---|---|---|---|---|
+| Prothom Alo | 3 | **0.49** | 0.64 | 0.00 | 0.82 | 5.0 | 158 |
+| Independent Television | 3 | **0.47** | 0.52 | 0.00 | 0.93 | 7.8 | 198 |
+| BBC News বাংলা | 3 | **0.45** | 0.56 | 0.01 | 0.82 | 5.5 | 218 |
+| The Daily Star | 3 | **0.42** | 0.46 | 0.00 | 0.94 | 10.5 | 188 |
+| EKHON TV | 2 | **0.36** | 0.50 | 0.00 | 0.83 | 1.0 | 90 |
+| Ekattor TV | 3 | **0.36** | 0.48 | 0.00 | 0.90 | 12.7 | 190 |
+| BanglaVision NEWS | 3 | **0.34** | 0.62 | 0.00 | 0.92 | 10.7 | 161 |
+| ATN Bangla News | 3 | **0.30** | 0.39 | 0.09 | 0.92 | 10.8 | 147 |
+| Jamuna TV | 3 | **0.24** | 0.41 | 0.00 | 0.96 | 0.5 | 129 |
+| DBC NEWS | 2 | **0.22** | 0.47 | 0.01 | 0.86 | 9.5 | 157 |
+| DW বাংলা | 3 | **0.14** | 0.27 | 0.08 | 0.89 | 7.3 | 231 |
+
+**Reading the numbers:**
+- **News channels yield about 15–50% usable frames.** Graphics, wide studio shots, field
+  footage and frequent cuts take most of the rest. Single-person interview segments reach 0.7–0.76;
+  an infographic segment scored 0.
+- **Checked by eye:** the best section (0.76) is one person facing the camera; the worst (0.00) is
+  charts with a tiny presenter. The metric tracks what is on screen.
+- **Three sections per channel is a small sample;** treat the ranking as rough.
+- **EKHON TV's faces are small** (median 90 px at 720p-equivalent), which fails the 100 px rule.
+- **The pose filter matters for interviews:** in the smoke test, a talk-show guest filmed at a
+  three-quarter angle (median yaw 38°) failed 82% of frames.
+
+**What it means for collection:** at about 0.3–0.5 usable for good news channels, 100 h of news
+gives roughly 30–50 h of usable single-face speech before the per-word filters.
 
 ## 7. Choosing the words
 

@@ -107,7 +107,8 @@ def fetch(args: argparse.Namespace) -> None:
     from .download import _classify
 
     RAWS.mkdir(parents=True, exist_ok=True)
-    done = {r["id"] for r in read_jsonl(LOG) if r["status"] in ("ok", "unavailable")}
+    last = {r["id"]: r["status"] for r in read_jsonl(LOG)}          # latest status per video
+    done = {v for v, st in last.items() if st in ("ok", "unavailable")}
     todo = [r for r in read_jsonl(PLAN) if r["id"] not in done]
     print(f"[fetch] {len(todo)} sections to download ({len(done)} done)")
     recent: deque[float] = deque()
@@ -134,6 +135,7 @@ def fetch(args: argparse.Namespace) -> None:
             "quiet": True, "no_warnings": True, "noprogress": True,
         }
         print(f"[fetch] ({n}/{len(todo)}) {r['channel'][:30]} {r['id']} {start:.0f}-{end:.0f}s", flush=True)
+        t_start = time.time()
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([f"https://www.youtube.com/watch?v={r['id']}"])
@@ -151,9 +153,34 @@ def fetch(args: argparse.Namespace) -> None:
             else:
                 print(f"[fetch]   {status}: {str(e)[:120]}")
             continue
-        rl_hits = 0
+        took = time.time() - t_start
         recent.append(time.time())
-        append_jsonl(LOG, {"id": r["id"], "status": "ok", "section": [start, end], "t": time.time()})
+        video = RAWS / f"{r['id']}.mp4"
+        got = _duration(video)
+        if got < 0.8 * (end - start):
+            # Seen while YouTube was throttling: ffmpeg ends early and leaves a short file.
+            video.unlink(missing_ok=True)
+            append_jsonl(LOG, {"id": r["id"], "status": "truncated", "got_s": got, "took_s": round(took), "t": time.time()})
+            print(f"[fetch]   truncated ({got:.0f} s of {end - start:.0f} s); will retry next run", flush=True)
+        else:
+            rl_hits = 0
+            append_jsonl(LOG, {"id": r["id"], "status": "ok", "section": [start, end], "took_s": round(took), "t": time.time()})
+        if took > args.max_seconds:
+            # No explicit rate-limit message, but a crawl means we're being throttled: stop politely.
+            print(f"[fetch] section took {took / 60:.0f} min (> {args.max_seconds / 60:.0f}); likely throttled. "
+                  "Stopping; re-run later to resume.", flush=True)
+            return
+
+
+def _duration(path: Path) -> float:
+    if not path.exists():
+        return 0.0
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+                         capture_output=True, text=True).stdout.strip()
+    try:
+        return float(out)
+    except ValueError:
+        return 0.0
 
 
 # --- analyze ------------------------------------------------------------------------
@@ -229,8 +256,9 @@ def analyze_one(vid: str, cfg: dict, filt: dict) -> dict:
 def analyze_all(args: argparse.Namespace) -> None:
     from .faces import MODEL, model_sha256
 
-    ok = [r["id"] for r in read_jsonl(LOG) if r["status"] == "ok"]
-    todo = [v for v in dict.fromkeys(ok) if (RAWS / f"{v}.mp4").exists() and (args.overwrite or not (METRICS / f"{v}.json").exists())]
+    last = {r["id"]: r["status"] for r in read_jsonl(LOG)}
+    ok = [v for v, st in last.items() if st == "ok"]
+    todo = [v for v in ok if (RAWS / f"{v}.mp4").exists() and (args.overwrite or not (METRICS / f"{v}.json").exists())]
     if not todo:
         print("[analyze] nothing to do")
         return
@@ -317,6 +345,7 @@ def main() -> None:
     pf.add_argument("--sleep-min", type=float, default=10)
     pf.add_argument("--sleep-max", type=float, default=20)
     pf.add_argument("--per-hour", type=int, default=150)
+    pf.add_argument("--max-seconds", type=float, default=300, help="stop the run if one section takes longer (throttling)")
     pa = sub.add_parser("analyze")
     pa.add_argument("--workers", type=int, default=max(1, min(4, (os.cpu_count() or 2) // 2)))
     pa.add_argument("--min-face", type=float, default=100)
