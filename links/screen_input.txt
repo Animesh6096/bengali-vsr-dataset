@@ -1,0 +1,43 @@
+# Screening input: candidate_channels.txt with the multi-language TEDx channel replaced by Bengali TEDx talks.
+# NOT yet screened: check that speakers face the camera before using. Region is a guess.
+# Use with: python -m bvsr.download expand links/candidate_channels.txt --max-per-link 20
+
+https://www.youtube.com/channel/UCbgcYEdMsuypG2NJ-znBp3w/videos  # ATN Bangla News | news | BD | standard
+https://www.youtube.com/channel/UCA4y9g_GRdNrZLH_u5LLSdw/videos  # BanglaVision NEWS | news | BD | standard
+https://www.youtube.com/channel/UChPD2BQ2dJ-w00klQQkc-Qg/videos  # BBC News বাংলা | news | BD/intl | standard
+https://www.youtube.com/channel/UCN6sm8iHiPd0cnoUardDAnw/videos  # Jamuna TV | news | BD | standard
+https://www.youtube.com/channel/UCWVqdPTigfQ-cSNwG7O9MeA/videos  # EKHON TV | news | BD | standard
+https://www.youtube.com/channel/UCATUkaOHwO9EP_W87zCiPbA/videos  # Independent Television | news | BD | standard
+https://www.youtube.com/channel/UCtqvtAVmad5zywaziN6CbfA/videos  # Ekattor TV | news | BD | standard
+https://www.youtube.com/channel/UCIIkOzwZIdLfHa4Q13dQrkw/videos  # DW বাংলা | news | BD/intl | standard
+https://www.youtube.com/channel/UCeG7m5-AJ4I0H4EIleIty4Q/videos  # Prothom Alo | news | BD | standard
+https://www.youtube.com/channel/UCKSJ5rTXq-pYgAmAOhVS_zQ/videos  # The Daily Star | news | BD | standard
+https://www.youtube.com/channel/UCUvXoiDEKI8VZJrr58g4VAw/videos  # DBC NEWS | news | BD | standard
+https://www.youtube.com/channel/UC8NcXMG3A3f2aFQyGTpSNww/videos  # Channel i News | news | BD | standard
+https://www.youtube.com/channel/UCv3rFzn-GHGtqzXiaq3sWNg/videos  # ABP ANANDA | news | WB | standard
+https://www.youtube.com/channel/UCdF5Q5QVbYstYrTfpgUl0ZA/videos  # Zee 24 Ghanta | news | WB | standard
+https://www.youtube.com/channel/UCHCR4UFsGwd_VcDa0-a4haw/videos  # TV9 Bangla | news | WB | standard
+https://www.youtube.com/channel/UCbf0XHULBkTfv2hBjaaDw9Q/videos  # News18 Bangla | news | WB | standard
+https://www.youtube.com/channel/UCUDQdVsKssximyFwg4IxnOQ/videos  # NTV News | news/talk | BD | standard
+https://www.youtube.com/channel/UCNUFterLJ9vpFZZ0try7sLA/videos  # SOMOY TV Bulletin | news/talk | BD | standard
+https://www.youtube.com/channel/UCsBqX8QguRdkawdlNbIL1dw/videos  # Kaler Kantho | talk | BD | standard
+https://www.youtube.com/channel/UC8uzDYcztPf-fICdGTowAAA/videos  # Deepto News | talk | BD | standard
+https://www.youtube.com/channel/UCMXaxzsQSvnwyIsC-bMgiCw/videos  # The Talk Show | talk | BD | standard
+https://www.youtube.com/channel/UCCyP1bZGzPgFAOjTuvVPH0w/videos  # Podcast with Arijit Chakraborty (Bengali Version) | podcast | WB | standard
+https://www.youtube.com/channel/UCNXPePOUo1uB2ffsFWVMNhA/videos  # Ss Sunny Convos (Bengali Podcast) | podcast | ? | CC BY
+https://www.youtube.com/channel/UCW5yX7_V4lBgyhAELf--cxA/videos  # SameerScane | podcast | BD | standard
+https://www.youtube.com/channel/UCKfp1FrO5l9T9TDPE4H5_ng/videos  # Time and Tide Podcast with Sourav | podcast | WB | standard
+https://www.youtube.com/channel/UChiJqc4XY8bTmlj8gfL0KFQ/videos  # Nur Rahman Podcast | podcast | BD | standard
+https://www.youtube.com/channel/UCLU_ZSD373JBRqVNsqHVJFw/videos  # The Trinomial Podcast | podcast | BD | standard
+https://www.youtube.com/channel/UCguZQBWNXQmldkl6lA-bAOg/videos  # Esha Rushdi | podcast | BD | standard
+https://www.youtube.com/channel/UC4I4k41dSerMi6TOxfFZHZw/videos  # Songe Sangita | podcast | WB | standard
+https://www.youtube.com/channel/UCSCDSgmIc-uBIU6xf6SevDQ/videos  # UNSCRIPTED talk with Santadip | podcast | WB | standard
+https://www.youtube.com/channel/UCYGztcCmHTr8mRQuE1ogMAA/videos  # D Talks | podcast | ? | standard
+https://www.youtube.com/channel/UCL89KKkLs0tZKld-iIS3NGw/videos  # 10 Minute School | education | BD | standard
+https://www.youtube.com/channel/UCQAnpUMLyCSzTg60QlsQjZg/videos  # Bangla Gurukul, GOLN | education | BD | standard
+https://www.youtube.com/channel/UCYPs4ObvwenWKu7RIpnj1cA/videos  # Bishal Dar Class | education | ? | standard
+https://www.youtube.com/channel/UCClsYw7y1BTTtTT8-EE_GPw/videos  # পিস টিভি বাংলা - Peace TV Bangla | religious lecture | ? | CC BY
+https://www.youtube.com/channel/UCuxth2BimHUigZ344JhcFPw/videos  # Ahmadullah | religious lecture | BD | CC BY
+https://www.youtube.com/watch?v=zHsfmphP_nE  # TEDx (Bengali) | tedx | WB | CC BY-NC-ND
+https://www.youtube.com/watch?v=00c4y3LM5oc  # TEDx (Bengali) | tedx | BD | CC BY-NC-ND
+https://www.youtube.com/watch?v=0hK0k_fF6I4  # TEDx (Bengali) | tedx | BD | CC BY-NC-ND (title English; language unchecked)

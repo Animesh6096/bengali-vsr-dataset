@@ -79,6 +79,23 @@ legal or ethics office.*
 Few Bengali talk channels are CC BY. The search found 3 out of 37 (table below), so Tier B
 will be most of the data.
 
+### 3b. Other platforms checked (2026-10-01)
+
+| Source | What we found | Verdict |
+|---|---|---|
+| **Wikimedia Commons** | Only free licences or public domain are accepted; NC and ND are not allowed (Commons:Licensing). Bengali videos: `Category:Videos in Bengali` has 9 files plus 3 sub-categories, e.g. Bangla WikiConference 2024 talks and 3 Wikitongues videos of people speaking Bengali to camera. | **Fully redistributable but tiny.** Good for a small open sample or demo set, not for training. |
+| **Internet Archive** | 2,509 items with `mediatype:movies` and a Bengali language tag; 581 carry a CC or public-domain tag. The sample shows feature films from 1972, TV serials and dubbed series marked "public domain" by uploaders, and most talk content is re-uploaded religious lectures. | **Licence tags not trustworthy** (uploader-chosen, often not the owner). Not recommended. |
+| **AVSpeech** (Ephrat et al. 2018) | About 4,700 h from about 290k YouTube videos, multilingual, released as YouTube IDs and timestamps with no language labels; about 3,400 h non-English. MultiVSR used these IDs and kept only languages with ≥100 h; Bengali isn't among its 13. | **A source of extra YouTube IDs.** Run language ID to find the Bengali ones. Same copyright status as any YouTube video (Tier B). |
+| **TED / TEDx** | CC BY-NC-ND. | Usable for research, release IDs only; clips can't be shared. |
+| **Broadcaster or creator agreements** | LRW and LRS2 were built from BBC broadcasts, and users must sign a **Data Sharing agreement with BBC R&D** for non-commercial academic research (LRS2 page). | **The strongest legal route** to releasing actual clips. |
+| Vimeo, PeerTube, government archives | Not checked. | — |
+
+**Conclusion:** no platform offers a large amount of genuinely free-to-reuse Bengali talking-head
+video. The realistic plan:
+1. **YouTube** for the bulk, released as metadata only (Tier B).
+2. **CC BY from the original creators,** plus Wikimedia Commons, for a small fully shareable subset (Tier A).
+3. **Written permission:** ask some channels for research use, the way LRW/LRS2 used a BBC agreement. Candidates are channels that would benefit from the work: education (10 Minute School), podcasts, and news organisations. BBC News বাংলা and DW বাংলা are on our list, and the BBC already has a research-sharing precedent with Oxford. A permission email template can be added once the supervisor agrees.
+
 ## 4. Candidate channels (metadata checked 2026-10-01)
 
 Found with yt-dlp metadata searches (Bengali and English queries for news, talk shows, podcasts,

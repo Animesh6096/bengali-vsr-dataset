@@ -211,6 +211,8 @@ LRW-Persian by program.
 - **Tier A** (CC BY and uploaded by the owner): clips can be released with attribution. **Tier B** (standard or TEDx): metadata only, following VoxCeleb, AVSpeech and MultiVSR.
 - **Search result:** only 3 of 37 candidate channels are CC BY (one podcast, two religious-lecture channels). Tier B will dominate.
 - **Not legal advice;** confirm with the university.
+- **Other platforms (checked 2026-10-01):** Wikimedia Commons (free licences only; about 20 Bengali videos), Internet Archive (2,509 Bengali video items, but licence tags unreliable), AVSpeech (YouTube IDs, no language labels), TED/TEDx (CC BY-NC-ND). Details in `docs/SOURCES.md` §3b.
+- **LRW and LRS2 access requires a signed Data Sharing agreement with BBC R&D**, for non-commercial academic research (LRS2 page). Permission from channels is the cleanest route to releasing clips.
 
 ### D17. Vocabulary selection plan (to run after the pilot)
 - **Prior rules:**
@@ -331,6 +333,10 @@ framing was checked against only one official sample.
 | MultiVSR (Prajwal, Hegde, Zisserman; VGG 2025) | ~12k h, 13 languages (English, Portuguese, Spanish, Russian, German, French, Japanese, Italian, Mandarin, Polish, Dutch, Catalan, Turkish); **no Bengali**. Pipeline: AVSpeech YouTube IDs, 25 fps, S3FD faces, ≥96×96, SyncNet offset ≤±10 frames, VoxLingua language ID, WhisperX (Whisper large-v3) word alignment; languages chosen with ≥100 h | https://www.robots.ox.ac.uk/~vgg/publications/2025/Prajwal25/prajwal25.pdf |
 | TEDx licence | CC BY-NC-ND: share with attribution; no commercial use; no derivatives | https://www.tedxtokyo.com/creative-commons/ ; https://www.ted.com/about/our-organization/our-policies-terms/ted-talks-usage-policy |
 | YouTube licences | Standard YouTube License or CC BY; CC BY allows reuse with attribution | https://support.google.com/youtube/answer/2797468 |
+| LRS2 access | videos + metadata for non-commercial academic research; users sign a Data Sharing agreement with BBC R&D | https://www.robots.ox.ac.uk/~vgg/data/lip_reading/lrs2.html |
+| Wikimedia Commons licensing | only free licences or public domain; NC and ND not allowed | https://commons.wikimedia.org/wiki/Commons:Licensing |
+| AVSpeech | ~4,700 h, ~290k YouTube videos, multilingual, IDs + timestamps, no language labels | https://looking-to-listen.github.io/avspeech/ |
+| Internet Archive Bengali video | 2,509 items (mediatype:movies, Bengali tag), 581 with a CC or public-domain tag; tags set by uploaders, many clearly not owners | archive.org advancedsearch, 2026-10-01 |
 | LipBengal (Sahed et al., Data in Brief 58:111254, 2025; doi:10.1016/j.dib.2024.111254) | 150 speakers (MIST undergraduates; 92% male, 8% female); up to 503 words each; 363,150 utterances; 54 classes; phone cameras at 720p 30 fps on the MIST campus and a dormitory hall; released as 720×1280 PNG frames; abstract says "diverse and uncontrolled conditions". The "40 speakers" in an earlier search summary was wrong. | PubMed 39845145; full text PMC11750490 |
 | Bengali ASR on Bengali-Loop (DL Sprint 4.0) | tugstugi as released 34.07% WER; Hishab TITU-BN 50.67%; fine-tuned systems 24.41–27.00% | arXiv 2603.04809, 2605.08214, 2603.03158 |
 | ROI study (Zhang et al. 2020) | LRW faces loosely registered by nose centres, little or no scale change in a clip (conflicts with the LRW paper's "mouth centred"; the official sample has the nose at the centre, D11) | https://arxiv.org/abs/2003.03206 |

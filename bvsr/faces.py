@@ -172,12 +172,12 @@ def model_sha256() -> str:
     return hashlib.sha256(MODEL.read_bytes()).hexdigest()
 
 
-def process_video(vid: str, cfg: dict) -> dict:
+def analyze(video: Path, cfg: dict) -> tuple[dict, dict]:
+    """Per-frame face measurements for any video file. Returns (arrays, summary)."""
     import cv2
     import mediapipe as mp
     from mediapipe.tasks.python import BaseOptions, vision
 
-    video = RAW / vid / f"{vid}.mp4"
     info = probe_video(video)
     W, H = info["width"], info["height"]
     opts = vision.FaceLandmarkerOptions(
@@ -226,7 +226,6 @@ def process_video(vid: str, cfg: dict) -> dict:
                 rows["sharp"].append(mouth_sharpness(gray, pts[lips]))
                 rows["lmk"].append(pts)
 
-    FACES.mkdir(parents=True, exist_ok=True)
     arrays = {
         "frame": np.array(rows["frame"], np.int32),
         "track": np.array(rows["track"], np.int32),
@@ -237,19 +236,26 @@ def process_video(vid: str, cfg: dict) -> dict:
         "cuts": np.array(cuts, np.int32),                               # first frame of each new shot
         "shot_dist": np.array(shot_dist, np.float32),                   # per-frame histogram distance
     }
-    np.savez_compressed(FACES / f"{vid}.npz", **arrays)
     tracks = {}
     for t in np.unique(arrays["track"]):
         f = arrays["frame"][arrays["track"] == t]
         tracks[int(t)] = {"first": int(f.min()), "last": int(f.max()), "n": int(len(f))}
     summary = {
-        "video_id": vid, "fps": FPS, "n_frames": n_frames, "width": W, "height": H, "offset": info["offset"],
+        "fps": FPS, "n_frames": n_frames, "width": W, "height": H, "offset": info["offset"],
         "n_detections": int(len(arrays["frame"])),
         "cuts": [int(c) for c in cuts],
         "frames_with_face": int(len(np.unique(arrays["frame"]))),
         "tracks": tracks, "config": cfg, "model_sha256": cfg["model_sha256"],
         "seconds": round(time.time() - t0, 1),
     }
+    return arrays, summary
+
+
+def process_video(vid: str, cfg: dict) -> dict:
+    arrays, summary = analyze(RAW / vid / f"{vid}.mp4", cfg)
+    summary = {"video_id": vid, **summary}
+    FACES.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(FACES / f"{vid}.npz", **arrays)
     (FACES / f"{vid}.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     return summary
 
