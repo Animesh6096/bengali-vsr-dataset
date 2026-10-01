@@ -25,7 +25,7 @@ cause was a lack of data: LipBengal has about 20 samples per word, against about
 was recorded in controlled conditions. No public Bengali dataset is word-level, in-the-wild and
 large scale. This project builds the tooling to create one.
 
-[PLAN.md](PLAN.md) has the full research background: how LRW, LRS3, LRW-1000, LRW-AR and
+[docs/RESEARCH_LOG.md](docs/RESEARCH_LOG.md) records every design decision with its reason, all measurements, the verification done and open issues; it is the reference for the paper. [PLAN.md](PLAN.md) has the full research background: how LRW, LRS3, LRW-1000, LRW-AR and
 LRW-Persian were built, the tool choices, size estimates and YouTube rate limits.
 
 ---
@@ -361,7 +361,9 @@ bvsr/
 ├── cut.py          stage 4: face-centred word / sentence clips, filters, word statistics
 └── viewer.py       local HTML viewer for spot-checking
 links/              example link lists
-PLAN.md             research background, design decisions, roadmap
+PLAN.md             research background, roadmap
+docs/RESEARCH_LOG.md  decisions + rationale, measurements, verification, open issues, paper notes
+CLAUDE.md           instructions for AI-assisted work sessions on this repo
 ```
 
 ## Related datasets
