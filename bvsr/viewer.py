@@ -23,7 +23,7 @@ h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:18px; margin:32px 0 8px; b
 .muted { color:var(--muted); font-size:13px; }
 .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px; }
-.card video { width:100%; border-radius:4px; background:#000; aspect-ratio:9/16; object-fit:contain; }
+.card video { width:100%; border-radius:4px; background:#000; aspect-ratio:1/1; object-fit:contain; }
 .word { font-size:20px; font-weight:600; }
 .sent { display:grid; grid-template-columns:minmax(200px, 320px) 1fr; gap:16px; margin-bottom:16px; }
 .sent video { width:100%; border-radius:6px; background:#000; }
@@ -50,7 +50,7 @@ def main() -> None:
     args = p.parse_args()
 
     by_word: dict[str, list[dict]] = defaultdict(list)
-    for meta_path in sorted((CLIPS / "words").glob("*/*.json")):
+    for meta_path in sorted((CLIPS / "words").glob("*/*_*.json")):
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         meta["_clip"] = meta_path.with_suffix(".mp4").relative_to(DATA).as_posix()
         by_word[meta["word"]].append(meta)
@@ -62,8 +62,9 @@ def main() -> None:
            f"<title>BVSR sample</title><style>{CSS}</style></head><body><main>",
            "<h1>Bengali VSR dataset: sample output</h1>",
            f"<p class='muted'>{n_clips} word clips across {len(by_word)} word classes. "
-           f"Word clips follow LRW: 29 frames at 25 fps (1.16 s), word centred; "
-           f"'frames' marks where the aligner places the word. Showing the {len(words)} most frequent words.</p>",
+           f"Word clips follow LRW: 29 frames at 25 fps (1.16 s), 256x256, face centred, word in the middle; "
+           f"'frames' marks where the aligner places the word, yaw is the largest head turn in the clip. "
+           f"Showing the {len(words)} most frequent words.</p>",
            "<h2>Word-level clips (LRW style)</h2>"]
     for w in words:
         out.append(f"<h3 class='word'>{html.escape(w)} <span class='muted'>({len(by_word[w])} clips)</span></h3><div class='grid'>")
@@ -71,22 +72,23 @@ def main() -> None:
             out.append(
                 f"<div class='card'><video src='{html.escape(m['_clip'])}' controls loop muted preload='metadata'></video>"
                 f"<div class='muted'>{m['video_id']} @ {m['word_start']:.2f}s<br>"
-                f"dur {m['duration']:.2f}s · frames {m['start_frame']}–{m['end_frame']} · score {m['score']:.2f}</div></div>")
+                f"dur {m['duration']:.2f}s · frames {m['start_frame']}–{m['end_frame']} · score {m['align_score']:.2f}"
+                f" · yaw {m['face']['yaw_abs']:.0f}°</div></div>")
         out.append("</div>")
 
     out.append("<h2>Sentence-level clips (LRS style)</h2>"
                "<p class='muted'>Click a word to play just that word. Red = low aligner confidence.</p>")
-    for txt in sorted((CLIPS / "sentences").glob("*/*.txt")):
-        lines = txt.read_text(encoding="utf-8").splitlines()
-        conf = lines[1].split(":", 1)[1].strip()
+    for meta_path in sorted((CLIPS / "sentences").glob("*/*.json")):
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
         spans = []
-        for line in lines[5:]:
-            word, s, e, sc = line.rsplit(" ", 3)
-            low = " class='low'" if float(sc) < args.low_score else ""
-            spans.append(f"<span{low} data-t='{s}' data-e='{e}'>{html.escape(word)}<small>{s}s</small></span>")
-        clip = txt.with_suffix(".mp4").relative_to(DATA).as_posix()
+        for w in meta["words"]:
+            low = " class='low'" if w["score"] < args.low_score else ""
+            spans.append(f"<span{low} data-t='{w['start']:.2f}' data-e='{w['end']:.2f}'>{html.escape(w['word'])}"
+                         f"<small>{w['start']:.2f}s</small></span>")
+        clip = meta_path.with_suffix(".mp4").relative_to(DATA).as_posix()
         out.append(f"<div class='sent'><video src='{html.escape(clip)}' controls preload='metadata'></video>"
-                   f"<div><div class='muted'>{txt.parent.name}/{txt.stem} · mean score {conf}</div>"
+                   f"<div><div class='muted'>{meta_path.parent.name}/{meta_path.stem} · {meta['n_frames']} frames"
+                   f" · mean score {meta['align_score']}</div>"
                    f"<div class='words'>{''.join(spans)}</div></div></div>")
 
     out.append(f"</main><script>{JS}</script></body></html>")

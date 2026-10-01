@@ -6,4 +6,8 @@ soundfile
 numpy
 silero-vad>=6.0
 ctc-forced-aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+# 0.10.35: mediapipe 1.0.x aborts on macOS ("graph_service ... Service is unavailable") even with the CPU delegate
+mediapipe==0.10.35
+opencv-contrib-python
+# model: models/face_landmarker.task (see README, Setup)
 # system: ffmpeg, deno (yt-dlp needs a JS runtime for YouTube since 2025.11.12)

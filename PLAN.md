@@ -50,7 +50,7 @@ links.txt ─► [1 download] ─► data/raw/<id>/{mp4,wav,info.json,bn.vtt}
            [2 VAD → ASR/subs → MMS forced alignment] ─► data/align/<id>.json
                  │
                  ▼
-           [3 face track → active speaker → quality filters]   ◄── NEXT
+           [3 face track → quality filters → (active speaker ◄── NEXT)]
                  │
                  ▼
            [4 cut] ─► clips/words/<word>/<id>_<ms>.mp4 (29 f, centred)
@@ -65,8 +65,9 @@ links.txt ─► [1 download] ─► data/raw/<id>/{mp4,wav,info.json,bn.vtt}
 | 0 | **Source curation** | you | Talking-head content first: news anchors, talk shows, lectures, speeches, interviews, vlogs. Include both Bangladeshi and West Bengal channels for dialect coverage. Track the channel for each video. |
 | 1 | Download (`bvsr.download`) | **done** | Expands playlists and channels, filters by duration, skips live videos and Shorts, stays under the rate limit (§4), and can resume |
 | 2 | Transcribe + align (`bvsr.transcribe`) | **done** | Per-word start, end and log-prob score |
-| 3 | Face + active-speaker filter | next | Per frame: face boxes, TalkNet score, landmarks, yaw/pitch, blur. A word is kept only if **one** face is speaking for ≥80% of its frames, the face is ≥100 px, and the pose is inside the LRW-Persian limits |
-| 4 | Cut clips (`bvsr.cut`) | **done (full-frame)** | Switches to face/mouth crops once stage 3 exists. We will store both a 224×224 face crop (LRS3 format) and a 96×96 mouth ROI. |
+| 3a | Faces (`bvsr.faces`) | **done** | Per frame on a 25 fps grid: MediaPipe 478 landmarks, head pose, mouth sharpness, IoU face tracks, histogram shot cuts. Clips are rejected on shot cut, broken track, more than one face, face <100 px, or \|yaw\|>30° / \|pitch\|>40° (LRW-Persian limits). |
+| 3b | Active speaker | next | TalkNet (or SyncNet confidence): keep a word only if the tracked face is the one speaking. Needed before multi-person sources (news panels, talk shows) are used; until then multi-face clips are rejected. |
+| 4 | Cut clips (`bvsr.cut`) | **done** | Face-centred 256×256 word clips (LRW) and 224×224 sentence clips (LRS3), with per-frame landmarks and crop boxes. A mouth ROI (96×96) is **preprocessing**, left to users or a separate tool, since LRW does not ship mouth crops either. |
 | 5 | Vocabulary | todo | Use `cut stats` counts. Candidate rules: ≥2–3 graphemes, ≥N distinct videos/channels per word, and a target of **500 words × ≥200 clips** (LRW-style, balanced). A second, naturally distributed release like LRW-1000 is optional. Decide how to handle homophenes (e.g. কলম / গরম in the thesis). |
 | 6 | Splits | todo | Channel-disjoint (or at least speaker-disjoint) val/test, with a clip budget per word. Record age, gender and pose metadata as LRW-Persian does. |
 | 7 | Verification | todo | Bengali speakers check every **test** clip, using a small review UI: play the clip, then accept, reject or correct the label. Measure ASR/alignment precision on a 500-clip sample to tune `--min-score`. |
