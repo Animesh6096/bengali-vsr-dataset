@@ -28,6 +28,7 @@ Contents:
 | 2026-09-24 | v0.1 | Stages 1 (download), 2 (VAD → ASR → forced alignment) and 4 (full-frame word/sentence clips) built and tested on one video. Local viewer. Repo published: github.com/Animesh6096/bengali-vsr-dataset (MIT, code only). |
 | 2026-09-24 | v0.1 | Full README. |
 | 2026-10-01 | v0.2 | Stage 3a: `bvsr.faces` (MediaPipe landmarks, head pose, tracking, shot-cut detection). `bvsr.cut` rewritten: face-centred 256×256 word clips and 224×224 sentence clips rendered on a shared 25 fps grid, per-frame landmarks and crop boxes, rejection log. MediaPipe pinned to 0.10.35. This research log and CLAUDE.md added. |
+| 2026-10-01 | docs | Checked three open facts against primary sources (§5, §7): LRW sample format and framing, LipBengal details, and the ASR papers. Corrected: LipBengal is not "controlled" (prompted speech by 150 students); LRW chose its speaker with a mouth-openness classifier, not SyncNet; tugstugi claim narrowed to the Bengali-Loop benchmark (34.07% WER). |
 
 ---
 
@@ -44,8 +45,11 @@ Recognition* (Karim, Bhattacharjee, Fahad, Khan; BRAC University, Dec 2025), rep
 - data scarcity as the main cause: about 20 samples per word in LipBengal against about 85 in LRW-AR;
 - a recommendation of at least 100 samples per word.
 
-LipBengal is recorded in controlled conditions. No in-the-wild, word-level Bengali VSR dataset is
-publicly available, as far as we found.
+LipBengal (Sahed et al., *Data in Brief* 2025) was recorded by 150 undergraduate students of one
+institution (MIST; 92% male) reading prompted words on phone cameras: 720p, 30 fps, released as PNG
+frames, up to 503 words per speaker, 363,150 utterances, 54 classes. Its abstract calls the conditions
+"diverse and uncontrolled", but the speech is prompted, not natural. No in-the-wild, word-level
+Bengali VSR dataset is publicly available, as far as we found.
 
 **People.** Animesh Bhattacharjee (repository owner); thesis supervisor Dr. Aniqua Nusrat Zereen,
 co-supervisor Md Nafiz Ishtiaque Mahee (BRAC University).
@@ -81,7 +85,14 @@ location is in brackets.
 - **Why:** Whisper needs input under 30 s. Removing silence and music reduces hallucinated text.
 
 ### D4. ASR [`bvsr/transcribe.py: ASR`]
-- **Model:** `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0, 0.8 B params). Search results summarising several 2026 Bengali long-form ASR papers say it was their lowest-WER baseline. *To do for the paper: cite the specific papers (arXiv 2603.03158, 2603.04809, 2605.08214) after reading them directly.*
+- **Model:** `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0; Whisper-medium, 0.8 B params per the model card).
+- **Evidence (read directly, 2026-10-01):** three papers from the Kaggle DL Sprint 4.0 competition, all on its **Bengali-Loop** long-form benchmark. Bangla-WhisperDiar describes it as 191 YouTube recordings, 158.6 h, about 792k words from 11 channels, mostly Bangla drama plus news and entertainment.
+  - WhisperAlign (Chowdhury et al., arXiv 2603.04809): tugstugi as released **34.07% WER**, Hishab TITU-BN 50.67%, their fine-tune 27.00%.
+  - Bangla-WhisperDiar (Bhuiyan et al., arXiv 2605.08214): tugstugi 34.07%, LoRA fine-tune 31.32%, their system 24.41%, TITU-BN 50.67%.
+  - Jahan et al. (arXiv 2603.03158): tugstugi with their segmentation 0.380 WER (private leaderboard) vs about 0.79 for WhisperX-based variants.
+- **Claim we can make:** the strongest off-the-shelf model *among those tested in these papers*, on one long-form YouTube benchmark. Not "the best Bengali ASR". **About 1 word in 3 is wrong**, which is why label checking (§8) is essential.
+- **Size disagreement:** the papers give 307M and ~764M parameters. Whisper-medium is about 769M, which matches the model card's 0.8B; use that.
+- **Candidates to compare on our pilot:** the fine-tuned systems above, if their weights are released (not checked).
 - **Run settings:**
   - Whisper is called directly (`WhisperForConditionalGeneration.generate`, `language="bn"`, `max_new_tokens=200`), not through the `pipeline` helper (see §10, B1).
   - fp16 on CUDA/MPS, fp32 on CPU.
@@ -143,7 +154,12 @@ Thresholds marked † come from LRW-Persian (arXiv 2510.22716): face ≥100×100
 - **Square crop centred on the nose tip** (landmark 1). The centre is smoothed with a 5-frame moving average.
 - **Size:** side = **1.6 × median landmark extent**, constant within a clip. Parts outside the frame are filled with black, and the padded fraction is recorded.
 - **Output:** resized to **256 px for words (LRW size)** and **224 px for sentences (LRS3 size)**, with INTER_AREA when shrinking and INTER_CUBIC when enlarging.
-- **Why:** Zhang et al. 2020 (*Can We Read Speech Beyond the Lips?*, arXiv 2003.03206) describe LRW as having little or no face-scale change within a clip, loosely registered by aligning nose centres. Several papers report LRW clips as 256×256. The LRW page itself doesn't state the resolution: *to do, open an LRW sample to confirm the exact size and framing before the paper compares the two.*
+- **Checked against the official LRW sample** (`AFTERNOON.mp4` from the LRW page, 2026-10-01):
+  - Format: 256×256, 25 fps, 29 frames, 1.16 s, MPEG-4 Part 2 video; AAC 16 kHz mono, 1.16 s.
+  - Framing, measured with our MediaPipe landmarker on all 29 frames: the face fills **0.616** of the crop (implied scale **1.62**); nose at (0.496, 0.504); mouth centre at (0.50, 0.61).
+  - Our clips (5 measured): face fills 0.619–0.635 (scale 1.58–1.62); nose at about (0.50, 0.50); mouth y 0.61–0.62. **Our framing matches LRW's**, based on n = 1 LRW sample.
+  - The sample's `.txt` holds Disk reference, Channel, Program start, Clip start and Duration only, no frame indices. Ours adds frame indices, face metrics and landmarks.
+- **A conflict to note in the paper:** the LRW paper (Chung & Zisserman, ACCV 2016, §3 Stage 5) says the face is cropped with the mouth centred, using the landmark registration. Zhang et al. 2020 (arXiv 2003.03206) say LRW is loosely registered by nose centres. The released sample has the **nose** at the centre and the mouth lower. We centre on the nose, which matches the sample.
 - **Mouth ROI is preprocessing, not dataset content.** LRW does not ship mouth crops; the common recipe is a 96×96 crop from lip landmarks and random 88×88 crops in training. We store landmarks per frame so users can crop the mouth without detecting faces again. The thesis pipeline (ROI = 1.5 × mouth width, 1.8 × mouth height) can be applied directly.
 - **Landmark storage:** landmarks are mapped with the **same integer box** used for the pixels, so they are pixel-exact (see §10, B5).
 
@@ -217,6 +233,7 @@ Machine: Apple M2 MacBook Air, 8 GB RAM, macOS; Python 3.12.10 (versions in §9)
 | What | How | Result |
 |---|---|---|
 | Clip format | ffprobe with frame counting on 40 random word clips | all 256×256, 29 frames, audio 1.160 s |
+| Format and framing vs LRW | official LRW sample probed; face extent and nose/mouth position measured with the same landmarker on it and on 5 of our clips | same format; face fills 0.616 (LRW) vs 0.619–0.635 (ours) of the crop, nose centred in both (D11) |
 | Landmark ↔ pixel alignment | stored lip landmarks and nose tip drawn back onto all 29 frames of a clip | on the lips and nose in every frame |
 | Word timing ↔ lips | 29-frame strips with the word frames marked, two clips (v0.1 and v0.2) | mouth moves on the marked frames (visual only) |
 | Pose sign and convention | yaw vs nose-offset cue, 200 frames | r = 0.86 |
@@ -225,15 +242,15 @@ Machine: Apple M2 MacBook Air, 8 GB RAM, macOS; Python 3.12.10 (versions in §9)
 | Viewer links | every `src` in viewer.html checked on disk | 147/147 resolve |
 
 **Not verified yet (needed for the paper):** label accuracy on real speech (§8), word-boundary
-accuracy against human marks, audio–video sync beyond visual checks (SyncNet offsets), and the
-exact LRW clip framing.
+accuracy against human marks, and audio–video sync beyond visual checks (SyncNet offsets). LRW
+framing was checked against only one official sample.
 
 ---
 
 ## 6. Known limitations and open issues
 
 1. **No active-speaker detection yet** (stage 3b; TalkNet or SyncNet). Multi-face clips are rejected, which will lose most news and talk-show footage.
-2. **ASR labels are not human-verified.** English loanwords look error-prone. A pilot human check of about 200 random clips is planned.
+2. **ASR labels are not human-verified.** The ASR model has 34.07% WER on the Bengali-Loop benchmark (D4), and English loanwords look error-prone. Our alignment-score filter removes some errors but not substituted words that are actually spoken similarly. A pilot human check of about 200 random clips is planned.
 3. **Long sentences that cross a shot cut are dropped.** LRS splits them at the cut instead.
 4. **The BlazeFace short-range detector** misses small or far faces. Those would mostly fail the 100 px rule anyway, but wide shots are under-represented.
 5. **No occlusion check** (burned-in captions, microphones, hands over the mouth).
@@ -250,14 +267,17 @@ exact LRW clip framing.
 | Dataset | Facts used | Source |
 |---|---|---|
 | LRW (Chung & Zisserman, ACCV 2016) | 500 words; 29 frames (1.16 s), word in the middle; duration in metadata; 800–1000 train / 50 val / 50 test per word; split by broadcast date | https://www.robots.ox.ac.uk/~vgg/data/lip_reading/lrw1.html |
+| LRW paper (read directly) | subtitles from broadcast bitmaps by OCR; Penn Phonetics Lab Forced Aligner; checked against IBM Watson STT; speaking face chosen by a linear SVM on the frequency spectrum of mouth openness; face cropped with the mouth centred; vocabulary = 500 most frequent words of 5–10 characters; time-disjoint sets with a one-week gap before test; test set checked by hand; model input 112×112 | https://www.robots.ox.ac.uk/~vgg/publications/2016/Chung16/chung16.pdf |
+| LRW sample clip | 256×256, 25 fps, 29 frames, AAC 16 kHz mono; metadata = disk reference, channel, program start, clip start, duration | https://www.robots.ox.ac.uk/~vgg/data/lip_reading/data/AFTERNOON.mp4 |
 | LRS pipeline (Chung et al., CVPR 2017) | Penn Phonetics Lab Forced Aligner; errors filtered with IBM Watson STT; SyncNet for sync and choosing the speaking face; shot detection, face detection and tracking | https://openaccess.thecvf.com/content_cvpr_2017/papers/Chung_Lip_Reading_Sentences_CVPR_2017_paper.pdf |
 | LRS3 | TED/TEDx, 400+ h; CC BY 4.0 for research, copyright stays with owners | https://mm.kaist.ac.kr/datasets/lip_reading/ |
 | LRW-1000 / CAS-VSR-W1k | 1,000 classes, 718,018 samples, 2,000+ speakers; 26 sources, 51 programs, 500+ h; naturally distributed | https://arxiv.org/abs/1810.06990 |
 | LRW-AR | 100 words, 20,000 videos, 36 speakers; YouTube news; automated pipeline | https://crns-smartvision.github.io/lrwar/ |
 | LRW-Persian (2025) | 1,989 h from 67 TV programs; VOSK ASR; words ≥4 chars, confidence > 0.9, < 1.5 s; TalkNet; face ≥100×100; DeepFace > 0.75; mask filter; \|yaw\| > 30° / \|pitch\| > 40° removed; MediaPipe FaceLandmarker; top 2,500 per program intersected and pruned to 743 words; 414,308 clips; program-disjoint 78/22 split | https://arxiv.org/abs/2510.22716 |
 | VoxCeleb | released as YouTube URLs + timestamps, CC BY 4.0 | https://www.robots.ox.ac.uk/~vgg/data/voxceleb/ |
-| LipBengal | Data in Brief, 2025; controlled recordings. *Speaker count conflicts between sources* (thesis: 150; a search summary: 40); check the paper before citing | https://www.researchgate.net/publication/387386925 |
-| ROI study (Zhang et al. 2020) | LRW faces loosely registered by nose centres, little or no scale change in a clip | https://arxiv.org/abs/2003.03206 |
+| LipBengal (Sahed et al., Data in Brief 58:111254, 2025; doi:10.1016/j.dib.2024.111254) | 150 speakers (MIST undergraduates; 92% male, 8% female); up to 503 words each; 363,150 utterances; 54 classes; phone cameras at 720p 30 fps on the MIST campus and a dormitory hall; released as 720×1280 PNG frames; abstract says "diverse and uncontrolled conditions". The "40 speakers" in an earlier search summary was wrong. | PubMed 39845145; full text PMC11750490 |
+| Bengali ASR on Bengali-Loop (DL Sprint 4.0) | tugstugi as released 34.07% WER; Hishab TITU-BN 50.67%; fine-tuned systems 24.41–27.00% | arXiv 2603.04809, 2605.08214, 2603.03158 |
+| ROI study (Zhang et al. 2020) | LRW faces loosely registered by nose centres, little or no scale change in a clip (conflicts with the LRW paper's "mouth centred"; the official sample has the nose at the centre, D11) | https://arxiv.org/abs/2003.03206 |
 | MediaPipe Face Landmarker | bundle = BlazeFace short-range + FaceMesh-V2 (478 points) + blendshapes | https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker |
 | yt-dlp limits | ~300 videos/h guest, ~2,000/h account, ban risk; `-t sleep`; PO tokens; JS runtime needed since 2025.11.12 | https://github.com/yt-dlp/yt-dlp/wiki/Extractors, https://github.com/yt-dlp/yt-dlp/issues/15012 |
 

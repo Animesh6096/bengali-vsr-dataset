@@ -6,7 +6,7 @@ recognition dataset from YouTube, using a pipeline that also works for other lan
 Why: our thesis (*A Transfer Learning Framework for Cross-Script VSR*) got 79.77% on LRW-AR
 but only 45.83% on LipBengal, and pointed to data scarcity as the main cause: about 20 samples
 per word in LipBengal against about 85 in LRW-AR. The thesis recommended at least 100 samples
-per word. LipBengal is also recorded under controlled conditions. No in-the-wild, word-level
+per word. LipBengal was recorded by 150 undergraduate students of one institution (92% male) reading prompted words on phone cameras, not natural speech. No in-the-wild, word-level
 Bengali VSR dataset is publicly available.
 
 ---
@@ -15,7 +15,7 @@ Bengali VSR dataset is publicly available.
 
 | Dataset | Language | Source | How labels and clips were made | Scale |
 |---|---|---|---|---|
-| **LRW** (Chung & Zisserman 2016) | English | BBC TV | Broadcast subtitles force-aligned with the Penn Phonetics Lab Forced Aligner, with errors filtered against IBM Watson STT. SyncNet synchronises audio and video and picks the speaking face. Clips are **29 frames (1.16 s)** with the word in the middle, and the word duration is stored in metadata. | 500 words; 800–1000 train, 50 val and 50 test clips per word; split **by broadcast date** |
+| **LRW** (Chung & Zisserman 2016) | English | BBC TV | Subtitles (OCR'd from broadcast bitmaps) force-aligned with the Penn Phonetics Lab Forced Aligner, checked against IBM Watson STT. Speaking face chosen by a linear SVM on the frequency spectrum of mouth openness. Face cropped around the mouth from landmarks. Clips are **29 frames (1.16 s), 256×256, 25 fps**, word in the middle; metadata gives the word duration. Vocabulary: the 500 most frequent words of **5–10 characters**. Test set checked by hand. | 500 words; 800–1000 train, 50 val and 50 test clips per word; split **by broadcast date**, with a one-week gap before test |
 | **LRS2 / LRS3** | English | BBC / TED + TEDx on YouTube | Same VGG pipeline (shot detection, face tracking, forced alignment, SyncNet). LRS3 is released for research under CC BY 4.0; copyright stays with the video owners. | LRS3: 400+ h, 5,594 talks |
 | **LRW-1000 / CAS-VSR-W1k** | Mandarin | 26 TV sources, 51 programs, 500+ h raw | "Naturally distributed": the number of clips per class follows real word frequency, so classes are imbalanced | 1,000 classes, 718,018 clips, 2,000+ speakers |
 | **LRW-AR** | Arabic | News programs on YouTube | Automated pipeline (few details published) | 100 words, 20,000 clips, 36 speakers |
@@ -24,7 +24,7 @@ Bengali VSR dataset is publicly available.
 
 What we take from these:
 1. **Labels come from audio.** Every in-the-wild dataset gets its words from subtitles or ASR, forced-aligns them to the audio, and cuts the video at those timestamps.
-2. **Active-speaker detection is required.** On-screen faces are often not the person speaking (B-roll, reaction shots, voice-over). LRW used SyncNet; LRW-Persian used TalkNet.
+2. **Active-speaker detection is required.** On-screen faces are often not the person speaking (B-roll, reaction shots, voice-over). LRW used a mouth-openness frequency classifier; the later LRS pipeline (CVPR 2017) used SyncNet; LRW-Persian used TalkNet.
 3. **Splits must not share speakers or programs.** LRW split by date and LRW-Persian by program. A random split lets the same anchor appear in train and test, which inflates results.
 4. **Release metadata, not media** (VoxCeleb / AVSpeech model). This limits copyright exposure.
 
@@ -32,11 +32,11 @@ What we take from these:
 
 | Need | Choice | Why |
 |---|---|---|
-| ASR | `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0, 0.8B) | Several 2026 Bengali long-form ASR papers report it as their lowest-WER baseline. It can be swapped with `--asr-model`. |
+| ASR | `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0, 0.8B) | Strongest off-the-shelf model in three 2026 papers on the DL Sprint 4.0 Bengali-Loop long-form benchmark (YouTube, mostly drama): **34.07% WER**, vs 50.67% for Hishab TITU-BN; fine-tuned systems reached 24–27%. About 1 word in 3 is wrong, so labels need human checking. It can be swapped with `--asr-model`. |
 | Better transcripts | Human-made `bn` YouTube subtitles when present (`--use-subs`) | LRW itself was built from subtitles |
 | Word timestamps | MMS forced aligner (`MahmoudAshraf/mms-300m-1130-forced-aligner`, 1130 languages) via `ctc-forced-aligner`, with **uroman** romanisation | torchaudio's `forced_align` / `MMS_FA` were deprecated in 2.8 and removed in 2.9, so we use the standalone package |
 | VAD / chunking | Silero VAD | Keeps ASR input under 20 s and removes silence and music, which reduces Whisper hallucinations |
-| Active speaker | TalkNet-ASD (MIT) or LR-ASD; SyncNet confidence as a cross-check | Same methods as LRW-Persian and LRW |
+| Active speaker | TalkNet-ASD (MIT) or LR-ASD; SyncNet confidence as a cross-check | TalkNet: LRW-Persian. SyncNet: the LRS pipeline (CVPR 2017). |
 | Face / lips | MediaPipe FaceLandmarker (+ FAN fallback) | Same stack as the thesis preprocessing (ROI = 1.5 × mouth width, 1.8 × mouth height) |
 | Speaker IDs for splits | Face-embedding clustering (InsightFace/ArcFace) | Needed for speaker-disjoint splits |
 | Label normalisation | NFC, strip ZWJ/ZWNJ and punctuation, Bengali letters only | Matches the thesis finding that Unicode normalisation matters a lot for Bengali |

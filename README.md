@@ -21,8 +21,8 @@ Mandarin (LRW-1000), Arabic (LRW-AR), Persian (LRW-Persian). Bengali has very li
 
 Our previous work, *A Transfer Learning Framework for Cross-Script Visual Speech Recognition*
 (BRAC University, 2025), reached 79.77% accuracy on LRW-AR but only 45.83% on LipBengal. The main
-cause was a lack of data: LipBengal has about 20 samples per word, against about 85 in LRW-AR, and
-was recorded in controlled conditions. No public Bengali dataset is word-level, in-the-wild and
+cause was a lack of data: LipBengal has about 20 samples per word, against about 85 in LRW-AR.
+LipBengal was recorded by 150 undergraduate students of one institution (92% male) reading prompted words on phone cameras, not natural speech. No public Bengali dataset is word-level, in-the-wild and
 large scale. This project builds the tooling to create one.
 
 [docs/RESEARCH_LOG.md](docs/RESEARCH_LOG.md) records every design decision with its reason, all measurements, the verification done and open issues; it is the reference for the paper. [PLAN.md](PLAN.md) has the full research background: how LRW, LRS3, LRW-1000, LRW-AR and
@@ -107,11 +107,12 @@ exactly video frame `frame_start + k`, its stored landmarks were measured on tha
 audio is the matching 640-sample slices (1/25 s at 16 kHz) of the wav.
 
 - **Word clips (LRW style):** **29 frames at 25 fps (1.16 s), 256×256**, centred on the middle of the word.
+  The official LRW sample clip has exactly this format: 256×256, 25 fps, 29 frames, 16 kHz mono AAC.
   - Spoken words are shorter than that (median 0.24 s, about 6 frames, in our test).
   - So each clip also contains part of the words before and after. **This is deliberate and matches LRW.** Models get a fixed-length input, and lip movement that starts before or continues after the word is kept.
   - The metadata records which frames contain the word, so a model can mask or trim the rest.
   - At most 5 clips of the same word come from one video, to keep speakers varied.
-- **Face-centred crop:** a square crop centred on the nose tip (LRW aligns nose centres). The centre is smoothed over 5 frames. The size is 1.6 × the face's landmark extent and stays constant within a clip, since LRW has little or no scale change inside a clip. Parts of the crop outside the frame are filled with black, and that fraction is recorded.
+- **Face-centred crop:** a square crop centred on the nose tip. The centre is smoothed over 5 frames. The size is 1.6 × the face's landmark extent and stays constant within a clip. This matches the official LRW sample: measured with the same landmarker, its face fills 0.616 of the crop (scale 1.62) with the nose at the centre, against 0.62–0.635 for our clips. The LRW paper describes the crop as mouth-centred, but in its sample the mouth sits below centre, at y = 0.61. Parts of the crop outside the frame are filled with black, and that fraction is recorded.
 - **Quality filters.** A candidate is rejected, and logged with the reason, if:
 
   | reason | rule (default) |
@@ -373,7 +374,7 @@ CLAUDE.md           instructions for AI-assisted work sessions on this repo
 - **LRW-1000 / CAS-VSR-W1k**: Yang et al., FG 2019.
 - **LRW-AR**: https://crns-smartvision.github.io/lrwar/
 - **LRW-Persian**: arXiv:2510.22716, 2025.
-- **LipBengal**: Data in Brief, 2025.
+- **LipBengal**: Sahed et al., *Data in Brief* 58:111254, 2025, doi:10.1016/j.dib.2024.111254.
 
 ## License
 
