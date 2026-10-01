@@ -6,3 +6,4 @@ cookies*.txt
 logs/
 .DS_Store
 *.zip
+bvsr_sample/
